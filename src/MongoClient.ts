@@ -1,33 +1,37 @@
-import { Client, ClientOptions } from '@elastic/elasticsearch';
-import { Collection } from './Collection';
+import {Client, ClientOptions} from '@elastic/elasticsearch';
 import Debug from 'debug';
+import {Db} from './Db';
 
-const debug = Debug('klm:mongo:client');
+const debug = Debug('mongoapi4es:client');
 
 export class MongoClient {
-    private _client: Client | undefined;
-    private clientOptions: ClientOptions | undefined;
+    private _esClient: Client | undefined;
+    private _clientOptions: ClientOptions | undefined;
 
     constructor(clientOptions?: ClientOptions) {
-        this.clientOptions = clientOptions;
+        this._clientOptions = clientOptions;
     }
 
     async connect(clientOptions?: ClientOptions): Promise<void> {
-        this.clientOptions = clientOptions || this.clientOptions;
+        this._clientOptions = clientOptions || this._clientOptions;
         debug('connecting');
-        this._client = new Client(this.clientOptions);
-        const info = await this._client.info();
+        this._esClient = new Client(this._clientOptions);
+        const info = await this._esClient.info();
         debug('elasticsearch %O', info);
     }
 
-    collection(collectionName: string): Collection {
-        return new Collection(this, collectionName);
+    async close(): Promise<void> {
+        await this._esClient?.close();
     }
 
-    get client(): Client {
-        if (!this._client) {
+    db(dbName: string): Db {
+        return new Db(this, dbName);
+    }
+
+    get esClient(): Client {
+        if (!this._esClient) {
             throw new Error('not connected');
         }
-        return this._client;
+        return this._esClient;
     }
 }

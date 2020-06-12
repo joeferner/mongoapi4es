@@ -1,5 +1,7 @@
 // see https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/mongodb/index.d.ts
 
+import {MongoError, ReadConcern, ReadPreferenceOrMode} from "mongodb";
+
 export type RootQuerySelector<T> = {
     /** https://docs.mongodb.com/manual/reference/operator/query/and/#op._S_and */
     // TODO $and?: Array<FilterQuery<T>>;
@@ -23,6 +25,22 @@ export type RootQuerySelector<T> = {
     [key: string]: any;
 };
 
+export interface MongoCallback<T> {
+    (error: MongoError, result: T): void;
+}
+
+/** http://mongodb.github.io/node-mongodb-native/3.1/api/Db.html#collection */
+export interface DbCollectionOptions extends CommonOptions {
+    // TODO raw?: boolean;
+    // TODO pkFactory?: object;
+    // TODO readPreference?: ReadPreferenceOrMode;
+    // TODO serializeFunctions?: boolean;
+    // TODO strict?: boolean;
+    // TODO readConcern?: ReadConcern;
+}
+
+export type DefaultSchema = any;
+
 export type Condition<T> = {}; // TODO MongoAltQuery<T> | QuerySelector<MongoAltQuery<T>>;
 
 export type FilterQuery<T> = {
@@ -41,10 +59,10 @@ type DotAndArrayNotation<AssignableType> = {
 export type MatchKeysAndValues<TSchema> = ReadonlyPartial<TSchema> & DotAndArrayNotation<any>;
 
 /** http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#findOne */
-export interface FindOneOptions<T> {
+export interface FindOneOptions {
     // TODO: limit?: number;
     // TODO: sort?: any[] | object;
-    projection?: { [P in keyof T]?: boolean };
+    projection?: object;
     /**
      * @deprecated Use options.projection instead
      */
@@ -129,8 +147,8 @@ type ExtractIdType<TSchema> = TSchema extends { _id: infer U } // user has defin
     ? {} extends U
         ? Exclude<U, {}>
         : unknown extends U
-        ? ObjectId
-        : U
+            ? ObjectId
+            : U
     : ObjectId; // user has not defined _id on schema
 
 // this makes _id optional

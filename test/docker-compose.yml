@@ -1,0 +1,22 @@
+version: '3'
+services:
+  elasticsearch:
+    image: "elasticsearch:7.7.0"
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
+  cerebro:
+    image: "lmenezes/cerebro"
+    ports:
+      - "9000:9000"
+
+  mongo:
+    image: "mongo:4.2.7"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - "27017:27017"

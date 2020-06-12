@@ -1,20 +1,20 @@
-import { Cursor } from './Cursor';
-import { CursorResult, FilterQuery, FindOneOptions } from './types';
-import { Collection } from './Collection';
-import { QueryResults } from './QueryResults';
+import {Cursor} from './Cursor';
+import {CursorResult, FilterQuery, FindOneOptions} from './types';
+import {QueryResults} from './QueryResults';
 import Debug from 'debug';
-import { QueryBuilder } from './QueryBuilder';
+import {QueryBuilder} from './QueryBuilder';
+import {Collection} from "./Collection";
 
-const debug = Debug('klm:mongo:FilterCursor');
+const debug = Debug('mongoapi4es:FilterCursor');
 
 export class FilterCursor<T> extends Cursor<T> {
-    private readonly _collection: Collection;
+    private readonly _collection: Collection<T>;
     private readonly _filter: FilterQuery<T>;
-    private readonly _options: FindOneOptions<T>;
+    private readonly _options: FindOneOptions;
     private _results: QueryResults<T> | undefined;
     private _currentIndex: number | undefined;
 
-    constructor(collection: Collection, filter: FilterQuery<T>, options?: FindOneOptions<T>) {
+    constructor(collection: Collection<T>, filter: FilterQuery<T>, options?: FindOneOptions) {
         super();
         this._collection = collection;
         this._filter = filter;
@@ -66,7 +66,7 @@ export class FilterCursor<T> extends Cursor<T> {
         return null;
     }
 
-    private async query(filter: FilterQuery<any>, options: FindOneOptions<any>): Promise<QueryResults<T>> {
+    private async query(filter: FilterQuery<any>, options: FindOneOptions): Promise<QueryResults<T>> {
         let projection = this._projection;
 
         for (const optionKey of Object.keys(options)) {
@@ -109,7 +109,7 @@ export class FilterCursor<T> extends Cursor<T> {
                 throw new Error(`invalid sort direction: ${value}`);
             }
             sort = {
-                sort: [{ [key]: { order: dir } }],
+                sort: [{[key]: {order: dir}}],
             };
         }
 
@@ -141,10 +141,16 @@ export class FilterCursor<T> extends Cursor<T> {
             size: this._limit,
         };
         debug('%s', JSON.stringify(body, null, 2));
-        const result = await this._collection.client.client.search({
-            index: this._collection.collectionName,
-            body,
-        });
-        return result.body.hits;
+        try {
+            const result = await this._collection.db.client.esClient.search({
+                index: this._collection.collectionName,
+                body,
+            });
+            debug('%s', JSON.stringify(result, null, 2));
+            return result.body.hits;
+        } catch (err) {
+            debug('%O', err.stack);
+            throw err;
+        }
     }
 }

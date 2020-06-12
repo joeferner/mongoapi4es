@@ -1,7 +1,8 @@
-import { Cursor } from './Cursor';
-import { FilterCursor } from './FilterCursor';
+import {Cursor} from './Cursor';
+import {FilterCursor} from './FilterCursor';
 import {
     CollectionInsertOneOptions,
+    DefaultSchema,
     FilterQuery,
     FindOneOptions,
     InsertOneWriteOpResult,
@@ -11,38 +12,38 @@ import {
     UpdateWriteOpResult,
     WithId,
 } from './types';
-import { MongoClient } from './MongoClient';
-import { QueryBuilder } from './QueryBuilder';
+import {QueryBuilder} from './QueryBuilder';
 import Debug from 'debug';
+import {Db} from "./Db";
 
-const debug = Debug('klm:mongo:Collection');
+const debug = Debug('mongoapi4es:Collection');
 
-export class Collection {
-    private _client: MongoClient;
+export class Collection<TSchema extends { [key: string]: any } = DefaultSchema> {
+    private _db: Db;
     private _collectionName: string;
 
-    constructor(client: MongoClient, collectionName: string) {
-        this._client = client;
+    constructor(db: Db, collectionName: string) {
+        this._db = db;
         this._collectionName = collectionName;
     }
 
-    async findOne<T>(filter: FilterQuery<Partial<T>>, options?: FindOneOptions<Partial<T>>): Promise<T> {
+    async findOne<T = TSchema>(filter: FilterQuery<TSchema>, options?: FindOneOptions): Promise<T | null> {
         return this.find(filter, options)
             .limit(1)
             .toArray()
             .then((arr) => {
-                return arr[0] as T;
+                return ((arr[0] as any) as T) || null;
             });
     }
 
-    find<T>(filter: FilterQuery<T>, options?: FindOneOptions<T>): Cursor<T> {
+    find<T>(filter: FilterQuery<T>, options?: FindOneOptions): Cursor<T> {
         return new FilterCursor<T>(this, filter, options);
     }
 
     /** http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#updateMany */
-    async updateMany<TSchema>(
-        filter: FilterQuery<TSchema>,
-        update: UpdateQuery<TSchema> | Partial<TSchema>,
+    async updateMany<T>(
+        filter: FilterQuery<T>,
+        update: UpdateQuery<T> | Partial<T>,
         options?: UpdateManyOptions,
     ): Promise<UpdateWriteOpResult> {
         options = options || {};
@@ -72,25 +73,26 @@ export class Collection {
             },
         };
         debug('%s', JSON.stringify(body, null, 2));
-        const result = await this.client.client.updateByQuery({
+        const result = await this._db.client.esClient.updateByQuery({
             index: this.collectionName,
             body,
         });
         return {};
     }
 
-    async insertOne<TSchema>(
-        docs: OptionalId<TSchema>,
+    async insertOne<T>(
+        docs: OptionalId<T>,
         options?: CollectionInsertOneOptions,
-    ): Promise<InsertOneWriteOpResult<WithId<TSchema>>> {
+    ): Promise<InsertOneWriteOpResult<WithId<T>>> {
         options = options || {};
         if (Object.keys(options).length > 0) {
             throw new Error('not implemented: insert with options');
         }
 
-        const result = await this._client.client.index({
+        const result = await this._db.client.esClient.index({
             index: this._collectionName,
             body: docs,
+            refresh: "true"
         });
         return {
             insertedCount: 1,
@@ -102,11 +104,14 @@ export class Collection {
         };
     }
 
-    get client(): MongoClient {
-        return this._client;
-    }
-
     get collectionName() {
         return this._collectionName;
+    }
+
+    /**
+     * Not part of MongoDb API
+     */
+    get db(): Db {
+        return this._db;
     }
 }

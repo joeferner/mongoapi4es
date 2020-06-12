@@ -1,7 +1,7 @@
-import { FilterQuery } from './types';
+import {FilterQuery} from './types';
 
 export class QueryBuilder {
-    static buildQuery(filter: FilterQuery<any>) {
+    static buildQuery(filter: FilterQuery<any>): any {
         const mustQueries = [];
         for (const key of Object.keys(filter)) {
             const value = (filter as any)[key];
@@ -50,6 +50,12 @@ export class QueryBuilder {
                     },
                 },
             });
+        }
+
+        if (mustQueries.length === 0) {
+            return {
+                match_all: {}
+            };
         }
 
         return {
