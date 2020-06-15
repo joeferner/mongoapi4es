@@ -2,7 +2,7 @@
   "name": "mongoapi4es",
   "version": "0.0.1",
   "description": "Mongo DB API for reading and writing to Elasticsearch",
-  "main": "./dist/main.js",
+  "main": "./dist/index.js",
   "scripts": {
     "build": "tsc && echo 'DONE'",
     "build:watch": "tsc --watch",
