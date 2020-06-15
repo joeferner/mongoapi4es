@@ -1,22 +1,22 @@
 
 # What is mongoapi4es
 
-mongoapi4es is an API that partially mimics the v3.6 MongoDB node API (https://mongodb.github.io/node-mongodb-native/3.6/api/)
+`mongoapi4es` is an API that partially mimics the v3.6 MongoDB node API (https://mongodb.github.io/node-mongodb-native/3.6/api/)
 but stores and queries all the data from Elasticsearch. This is meant as either an alterntive API to the Elasticsearch
-API or as a transition from Mongo to Elasticsearch only.
+API or as a transition from Mongo to Elasticsearch.
 
 # Install
 
-```
+```bash
 npm install mongoapi4es
 ```
 
 # Getting Started
 
 Other than the loads of missing features and APIs this API is meant to act as if you were using Mongo. The only
-difference is how you initialize and connect.
+difference is how you initialize the client.
 
-```
+```javascript
 import { MongoClient as EsMongoClient } from './MongoClient';
 
 // create a client and connect to Elasticsearch
@@ -59,7 +59,7 @@ const results = await db.collection('testCollection').findOne({
 
 The unit tests use docker instances of Elasticsearch and MongoDB to verify compatibility.
 
-```
+```bash
 cd test
 docker-compose up
 cd ..
