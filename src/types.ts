@@ -1,6 +1,6 @@
 // see https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/mongodb/index.d.ts
 
-import {MongoError, ReadConcern, ReadPreferenceOrMode} from "mongodb";
+import {MongoError} from "mongodb";
 
 export type RootQuerySelector<T> = {
     /** https://docs.mongodb.com/manual/reference/operator/query/and/#op._S_and */
@@ -89,6 +89,11 @@ export interface FindOneOptions {
     // TODO: maxTimeMS?: number;
     // TODO: collation?: CollationDocument;
     // TODO: session?: ClientSession;
+
+    /**
+     * Elasticsearch only option to specify the page size to fetch when fetching lots of documents.
+     */
+    esPageSize?: number;
 }
 
 /**

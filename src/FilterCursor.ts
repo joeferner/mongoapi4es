@@ -8,14 +8,19 @@ import {Collection} from "./Collection";
 const debug = Debug('mongoapi4es:FilterCursor');
 
 export class FilterCursor<T> extends Cursor<T> {
+    static readonly DEFAULT_PAGE_SIZE: number = 20;
     private readonly _collection: Collection<T>;
     private readonly _filter: FilterQuery<T>;
     private readonly _options: FindOneOptions;
     private _results: QueryResults<T> | undefined;
-    private _currentIndex: number | undefined;
+    private _resultsIndex: number | undefined;
+    private _resultsOffset: number;
+    private _pageSize: number;
 
     constructor(collection: Collection<T>, filter: FilterQuery<T>, options?: FindOneOptions) {
         super();
+        this._pageSize = options?.esPageSize || FilterCursor.DEFAULT_PAGE_SIZE;
+        this._resultsOffset = 0;
         this._collection = collection;
         this._filter = filter;
         this._options = options || {};
@@ -37,40 +42,51 @@ export class FilterCursor<T> extends Cursor<T> {
 
     async hasNext(): Promise<boolean> {
         if (!this._results) {
-            this._results = await this.query(this._filter, this._options);
+            this._results = await this.query();
         }
         if (!this._results) {
             throw new Error('invalid state');
         }
-        if (this._currentIndex === undefined) {
-            this._currentIndex = 0;
+        if (this._resultsIndex === undefined) {
+            this._resultsIndex = 0;
         }
-        return this._currentIndex < this._results.hits.length;
+        if (this._resultsIndex < this._results.hits.length) {
+            return true;
+        }
+        if (this._limit !== undefined && this._resultsIndex + this._resultsOffset >= this._limit) {
+            return false;
+        }
+        if ((this._skip || 0) + this._resultsIndex + this._resultsOffset >= this._results.total.value) {
+            return false;
+        }
+
+        // setup and load next batch of results
+        this._resultsOffset += this._results.hits.length;
+        this._resultsIndex = 0;
+        this._results = undefined;
+        return this.hasNext();
     }
 
     async next(): Promise<T | null> {
-        if (!this._results) {
-            this._results = await this.query(this._filter, this._options);
+        if (!await this.hasNext()) {
+            return null;
         }
-        if (!this._results) {
-            throw new Error('invalid state');
+        if (!this._results || this._resultsIndex === undefined) {
+            throw new Error('invalid state, hasNext returned true but no results or currentIndex set');
         }
-        if (this._currentIndex === undefined) {
-            this._currentIndex = 0;
-        }
-        const hit = this._results.hits[this._currentIndex];
+        const hit = this._results.hits[this._resultsIndex];
         if (hit) {
-            this._currentIndex++;
+            this._resultsIndex++;
             return hit._source;
         }
         return null;
     }
 
-    private async query(filter: FilterQuery<any>, options: FindOneOptions): Promise<QueryResults<T>> {
+    private async query(): Promise<QueryResults<T>> {
         let projection = this._projection;
 
-        for (const optionKey of Object.keys(options)) {
-            const optionValue = (options as any)[optionKey];
+        for (const optionKey of Object.keys(this._options)) {
+            const optionValue = (this._options as any)[optionKey];
             if (optionKey === 'projection') {
                 if (projection) {
                     throw new Error('not implemented: project and projection options');
@@ -79,9 +95,6 @@ export class FilterCursor<T> extends Cursor<T> {
             } else {
                 throw new Error('not implemented: query with options');
             }
-        }
-        if (this._limit === undefined) {
-            throw new Error('not implemented: limit === undefined');
         }
 
         let sort = {};
@@ -134,11 +147,11 @@ export class FilterCursor<T> extends Cursor<T> {
         }
 
         const body = {
-            query: QueryBuilder.buildQuery(filter),
+            query: QueryBuilder.buildQuery(this._filter),
             ...sort,
             ...sourceFilter,
-            from: this._skip || 0,
-            size: this._limit,
+            from: (this._skip || 0) + this._resultsOffset,
+            size: Math.min(this._pageSize, ((this._limit === undefined) ? Number.MAX_SAFE_INTEGER : this._limit) - this._resultsOffset),
         };
         debug('%s', JSON.stringify(body, null, 2));
         try {

@@ -74,6 +74,7 @@ export class Collection<TSchema extends { [key: string]: any } = DefaultSchema> 
         };
         debug('%s', JSON.stringify(body, null, 2));
         const result = await this._db.client.esClient.updateByQuery({
+            refresh: this._db.client.clientOptions.mongoapi4es?.refreshOnUpdates,
             index: this.collectionName,
             body,
         });
@@ -89,10 +90,11 @@ export class Collection<TSchema extends { [key: string]: any } = DefaultSchema> 
             throw new Error('not implemented: insert with options');
         }
 
+        const refresh = this._db.client.clientOptions.mongoapi4es?.refreshOnUpdates;
         const result = await this._db.client.esClient.index({
             index: this._collectionName,
             body: docs,
-            refresh: "true"
+            refresh: refresh === undefined ? "false" : (refresh ? "true" : "false")
         });
         return {
             insertedCount: 1,

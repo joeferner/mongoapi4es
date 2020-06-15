@@ -45,11 +45,19 @@ export function describeBoth(options: DescribeBothOptions, fn: () => void) {
     describe(options.name, () => {
         beforeAll(async () => {
             const esClient = new EsMongoClient({
-                node: 'http://localhost:9200'
+                node: 'http://localhost:9200',
+                mongoapi4es: {
+                    refreshOnUpdates: true
+                }
             });
             await esClient.connect();
 
-            const mongoClient = new MongoMongoClient('mongodb://root:root@localhost:27017/admin');
+            const mongoClient = new MongoMongoClient(
+                'mongodb://root:root@localhost:27017/admin',
+                {
+                    useUnifiedTopology: true
+                }
+            );
             await mongoClient.connect();
 
             (jasmine as Jasmine).dbName = 'test';
@@ -61,6 +69,11 @@ export function describeBoth(options: DescribeBothOptions, fn: () => void) {
             const esClient = (jasmine as Jasmine).esClient as EsMongoClient;
             if (esClient) {
                 await esClient.close();
+            }
+
+            const mongoClient = (jasmine as Jasmine).mongoClient as MongoMongoClient;
+            if (mongoClient) {
+                await mongoClient.close();
             }
         });
 
