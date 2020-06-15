@@ -1,5 +1,6 @@
 import { describeBoth, testBoth } from './_testUtils';
 import { FilterCursor } from './FilterCursor';
+import { ObjectId } from 'bson';
 
 interface TestModel {
     stringFieldName: string;
@@ -30,6 +31,7 @@ describeBoth(
             });
 
             testBoth('matching string', async ({ db, collection }) => {
+                const startId = new ObjectId();
                 await collection?.insertOne({
                     stringFieldName: 'test1',
                 });
@@ -37,13 +39,17 @@ describeBoth(
                     stringFieldName: 'test2',
                 });
 
-                const results = await collection?.findOne<TestModel>({
+                const result = await collection?.findOne<TestModel>({
                     stringFieldName: 'test1',
                 });
-                if (!results) {
+                if (!result) {
                     throw new Error('not found');
                 }
-                expect(results.stringFieldName).toBe('test1');
+                const endId = new ObjectId();
+                expect(result.stringFieldName).toBe('test1');
+                const id = (result as any)._id;
+                expect(id.getTimestamp().getTime()).toBeGreaterThanOrEqual(startId.getTimestamp().getTime());
+                expect(id.getTimestamp().getTime()).toBeLessThanOrEqual(endId.getTimestamp().getTime());
             });
         });
 

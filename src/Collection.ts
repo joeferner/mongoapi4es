@@ -15,6 +15,7 @@ import {
 import { QueryBuilder } from './QueryBuilder';
 import Debug from 'debug';
 import { Db } from './Db';
+import { ObjectId } from 'bson';
 
 const debug = Debug('mongoapi4es:Collection');
 
@@ -82,7 +83,7 @@ export class Collection<TSchema extends { [key: string]: any } = DefaultSchema> 
     }
 
     async insertOne<T>(
-        docs: OptionalId<T>,
+        doc: OptionalId<T>,
         options?: CollectionInsertOneOptions,
     ): Promise<InsertOneWriteOpResult<WithId<T>>> {
         options = options || {};
@@ -91,9 +92,20 @@ export class Collection<TSchema extends { [key: string]: any } = DefaultSchema> 
         }
 
         const refresh = this._db.client.clientOptions.mongoapi4es?.refreshOnUpdates;
+        const body: any = {
+            ...doc,
+        };
+        let id;
+        if ('_id' in body) {
+            id = body._id;
+            delete body._id;
+        } else {
+            id = new ObjectId().toHexString();
+        }
         const result = await this._db.client.esClient.index({
             index: this._collectionName,
-            body: docs,
+            id,
+            body,
             refresh: refresh === undefined ? 'false' : refresh ? 'true' : 'false',
         });
         return {

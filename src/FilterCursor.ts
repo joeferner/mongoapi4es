@@ -4,6 +4,7 @@ import { QueryResults } from './QueryResults';
 import Debug from 'debug';
 import { QueryBuilder } from './QueryBuilder';
 import { Collection } from './Collection';
+import { ObjectId } from 'bson';
 
 const debug = Debug('mongoapi4es:FilterCursor');
 
@@ -77,7 +78,11 @@ export class FilterCursor<T> extends Cursor<T> {
         const hit = this._results.hits[this._resultsIndex];
         if (hit) {
             this._resultsIndex++;
-            return hit._source;
+            const id = ObjectId.isValid(hit._id) ? new ObjectId(hit._id) : hit._id;
+            return {
+                _id: id,
+                ...hit._source,
+            };
         }
         return null;
     }
