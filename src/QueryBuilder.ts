@@ -1,4 +1,4 @@
-import {FilterQuery} from './types';
+import { FilterQuery } from './types';
 
 export class QueryBuilder {
     static buildQuery(filter: FilterQuery<any>): any {
@@ -54,7 +54,7 @@ export class QueryBuilder {
 
         if (mustQueries.length === 0) {
             return {
-                match_all: {}
+                match_all: {},
             };
         }
 

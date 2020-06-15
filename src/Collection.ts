@@ -1,5 +1,5 @@
-import {Cursor} from './Cursor';
-import {FilterCursor} from './FilterCursor';
+import { Cursor } from './Cursor';
+import { FilterCursor } from './FilterCursor';
 import {
     CollectionInsertOneOptions,
     DefaultSchema,
@@ -12,9 +12,9 @@ import {
     UpdateWriteOpResult,
     WithId,
 } from './types';
-import {QueryBuilder} from './QueryBuilder';
+import { QueryBuilder } from './QueryBuilder';
 import Debug from 'debug';
-import {Db} from "./Db";
+import { Db } from './Db';
 
 const debug = Debug('mongoapi4es:Collection');
 
@@ -94,7 +94,7 @@ export class Collection<TSchema extends { [key: string]: any } = DefaultSchema> 
         const result = await this._db.client.esClient.index({
             index: this._collectionName,
             body: docs,
-            refresh: refresh === undefined ? "false" : (refresh ? "true" : "false")
+            refresh: refresh === undefined ? 'false' : refresh ? 'true' : 'false',
         });
         return {
             insertedCount: 1,

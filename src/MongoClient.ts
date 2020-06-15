@@ -1,13 +1,13 @@
-import {Client, ClientOptions} from '@elastic/elasticsearch';
+import { Client, ClientOptions } from '@elastic/elasticsearch';
 import Debug from 'debug';
-import {Db} from './Db';
+import { Db } from './Db';
 
 const debug = Debug('mongoapi4es:client');
 
 export interface Mongoapi4esOptions extends ClientOptions {
     mongoapi4es?: {
         refreshOnUpdates?: boolean;
-    }
+    };
 }
 
 export class MongoClient {

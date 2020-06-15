@@ -1,9 +1,9 @@
-import {Cursor} from './Cursor';
-import {CursorResult, FilterQuery, FindOneOptions} from './types';
-import {QueryResults} from './QueryResults';
+import { Cursor } from './Cursor';
+import { CursorResult, FilterQuery, FindOneOptions } from './types';
+import { QueryResults } from './QueryResults';
 import Debug from 'debug';
-import {QueryBuilder} from './QueryBuilder';
-import {Collection} from "./Collection";
+import { QueryBuilder } from './QueryBuilder';
+import { Collection } from './Collection';
 
 const debug = Debug('mongoapi4es:FilterCursor');
 
@@ -68,7 +68,7 @@ export class FilterCursor<T> extends Cursor<T> {
     }
 
     async next(): Promise<T | null> {
-        if (!await this.hasNext()) {
+        if (!(await this.hasNext())) {
             return null;
         }
         if (!this._results || this._resultsIndex === undefined) {
@@ -122,7 +122,7 @@ export class FilterCursor<T> extends Cursor<T> {
                 throw new Error(`invalid sort direction: ${value}`);
             }
             sort = {
-                sort: [{[key]: {order: dir}}],
+                sort: [{ [key]: { order: dir } }],
             };
         }
 
@@ -151,7 +151,10 @@ export class FilterCursor<T> extends Cursor<T> {
             ...sort,
             ...sourceFilter,
             from: (this._skip || 0) + this._resultsOffset,
-            size: Math.min(this._pageSize, ((this._limit === undefined) ? Number.MAX_SAFE_INTEGER : this._limit) - this._resultsOffset),
+            size: Math.min(
+                this._pageSize,
+                (this._limit === undefined ? Number.MAX_SAFE_INTEGER : this._limit) - this._resultsOffset,
+            ),
         };
         debug('%s', JSON.stringify(body, null, 2));
         try {

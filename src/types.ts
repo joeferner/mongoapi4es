@@ -1,6 +1,6 @@
 // see https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/mongodb/index.d.ts
 
-import {MongoError} from "mongodb";
+import { MongoError } from 'mongodb';
 
 export type RootQuerySelector<T> = {
     /** https://docs.mongodb.com/manual/reference/operator/query/and/#op._S_and */
@@ -25,9 +25,7 @@ export type RootQuerySelector<T> = {
     [key: string]: any;
 };
 
-export interface MongoCallback<T> {
-    (error: MongoError, result: T): void;
-}
+export type MongoCallback<T> = (error: MongoError, result: T) => void;
 
 /** http://mongodb.github.io/node-mongodb-native/3.1/api/Db.html#collection */
 export interface DbCollectionOptions extends CommonOptions {
@@ -152,8 +150,8 @@ type ExtractIdType<TSchema> = TSchema extends { _id: infer U } // user has defin
     ? {} extends U
         ? Exclude<U, {}>
         : unknown extends U
-            ? ObjectId
-            : U
+        ? ObjectId
+        : U
     : ObjectId; // user has not defined _id on schema
 
 // this makes _id optional

@@ -1,6 +1,6 @@
-import {MongoClient} from "./MongoClient";
-import {Collection} from "./Collection";
-import {DbCollectionOptions, DefaultSchema, MongoCallback} from "./types";
+import { MongoClient } from './MongoClient';
+import { Collection } from './Collection';
+import { DbCollectionOptions, DefaultSchema, MongoCallback } from './types';
 
 export class Db {
     private _client: MongoClient;
@@ -13,13 +13,13 @@ export class Db {
 
     async createCollection(name: string): Promise<void> {
         await this.client.esClient.indices.create({
-            index: name
+            index: name,
         });
     }
 
     async dropCollection(name: string): Promise<void> {
         await this.client.esClient.indices.delete({
-            index: name
+            index: name,
         });
     }
 
@@ -31,7 +31,8 @@ export class Db {
     collection<TSchema = DefaultSchema>(
         name: string,
         optionsOrCallback?: MongoCallback<Collection<TSchema>> | DbCollectionOptions,
-        callback?: MongoCallback<Collection<TSchema>>): Collection<TSchema> {
+        callback?: MongoCallback<Collection<TSchema>>,
+    ): Collection<TSchema> {
         if (optionsOrCallback || callback) {
             throw new Error('not implemented');
         }

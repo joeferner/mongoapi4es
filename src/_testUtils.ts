@@ -1,7 +1,7 @@
-import {MongoClient as EsMongoClient} from "./MongoClient";
-import {MongoClient as MongoMongoClient} from "mongodb";
-import {Collection as EsCollection} from "./Collection";
-import {Db as EsDb} from "./Db";
+import { MongoClient as EsMongoClient } from './MongoClient';
+import { MongoClient as MongoMongoClient } from 'mongodb';
+import { Collection as EsCollection } from './Collection';
+import { Db as EsDb } from './Db';
 
 interface CurrentTest {
     id: string;
@@ -47,17 +47,14 @@ export function describeBoth(options: DescribeBothOptions, fn: () => void) {
             const esClient = new EsMongoClient({
                 node: 'http://localhost:9200',
                 mongoapi4es: {
-                    refreshOnUpdates: true
-                }
+                    refreshOnUpdates: true,
+                },
             });
             await esClient.connect();
 
-            const mongoClient = new MongoMongoClient(
-                'mongodb://root:root@localhost:27017/admin',
-                {
-                    useUnifiedTopology: true
-                }
-            );
+            const mongoClient = new MongoMongoClient('mongodb://root:root@localhost:27017/admin', {
+                useUnifiedTopology: true,
+            });
             await mongoClient.connect();
 
             (jasmine as Jasmine).dbName = 'test';
@@ -80,7 +77,7 @@ export function describeBoth(options: DescribeBothOptions, fn: () => void) {
         beforeEach(async () => {
             const dbName = (jasmine as Jasmine).dbName;
             if (!dbName) {
-                throw new Error('dbName missing')
+                throw new Error('dbName missing');
             }
             const collectionName = `test-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
             (jasmine as Jasmine).collectionName = collectionName;
@@ -101,7 +98,7 @@ export function describeBoth(options: DescribeBothOptions, fn: () => void) {
                 if (options.mappings) {
                     await esClient.esClient.indices.putMapping({
                         index: collectionName,
-                        body: options.mappings
+                        body: options.mappings,
                     });
                 }
             }
@@ -110,7 +107,7 @@ export function describeBoth(options: DescribeBothOptions, fn: () => void) {
         afterEach(async () => {
             const dbName = (jasmine as Jasmine).dbName;
             if (!dbName) {
-                throw new Error('dbName missing')
+                throw new Error('dbName missing');
             }
             const collectionName = (jasmine as Jasmine).collectionName;
             const currentTest = (jasmine as Jasmine).currentTest as CurrentTest;
@@ -153,7 +150,7 @@ export function testBoth(name: string, fn: (args: TestBothArgs) => Promise<void>
                 client: esClient,
                 db,
                 collectionName,
-                collection: collectionName ? db.collection(collectionName) : undefined
+                collection: collectionName ? db.collection(collectionName) : undefined,
             });
         });
 
@@ -174,7 +171,7 @@ export function testBoth(name: string, fn: (args: TestBothArgs) => Promise<void>
                 client: (mongoClient as any) as EsMongoClient,
                 db: (db as any) as EsDb,
                 collectionName,
-                collection: (collection as any) as EsCollection
+                collection: (collection as any) as EsCollection,
             });
         });
     });

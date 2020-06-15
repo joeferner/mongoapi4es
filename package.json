@@ -11,8 +11,8 @@
     "lint-staged": "lint-staged",
     "test": "jest",
     "test:watch": "jest --watch",
-    "pre-commit": "npm run format && npm run lint-staged && (cd public && npm run format && npm run lint-staged)",
-    "pre-push": "npm run test && (cd public && npm run test)"
+    "pre-commit": "npm run format && npm run lint-staged",
+    "pre-push": "npm run test"
   },
   "keywords": [
     "mongo",
@@ -30,6 +30,7 @@
     "jest": "^26.0.1",
     "lint-staged": "^10.2.10",
     "mongodb": "^3.5.9",
+    "prettier": "^2.0.5",
     "ts-jest": "^26.1.0",
     "ts-node": "^8.10.2",
     "tslint": "^6.1.2",
@@ -40,5 +41,11 @@
   "dependencies": {
     "debug": "^4.1.1",
     "@elastic/elasticsearch": "^7.7.1"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run pre-commit",
+      "pre-push": "npm run pre-push"
+    }
   }
 }

@@ -1,4 +1,4 @@
-import {describeBoth, testBoth} from "./_testUtils";
+import { describeBoth, testBoth } from './_testUtils';
 
 interface TestModel {
     stringFieldName: string;
@@ -10,17 +10,17 @@ describeBoth(
         name: 'Insert',
         mappings: {
             properties: {
-                stringFieldName: {type: 'keyword'},
-                integerFieldName: {type: 'integer'}
-            }
-        }
+                stringFieldName: { type: 'keyword' },
+                integerFieldName: { type: 'integer' },
+            },
+        },
     },
     () => {
         describe('insertOne', () => {
-            testBoth('insertOne field types', async ({db, collection}) => {
+            testBoth('insertOne field types', async ({ db, collection }) => {
                 await collection?.insertOne({
                     stringFieldName: 'test1',
-                    integerFieldName: 123
+                    integerFieldName: 123,
                 });
 
                 const results = await collection?.find<TestModel>({}).toArray();
@@ -32,5 +32,5 @@ describeBoth(
                 expect(results[0].integerFieldName).toBe(123);
             });
         });
-    }
+    },
 );
