@@ -4,6 +4,7 @@ interface TestModel {
     stringFieldName: string;
     stringField2Name: string;
     integerFieldName: number;
+    dateFieldName: Date;
 }
 
 describeBoth(
@@ -14,12 +15,14 @@ describeBoth(
                 stringFieldName: { type: 'keyword' },
                 stringField2Name: { type: 'keyword' },
                 integerFieldName: { type: 'integer' },
+                dateFieldName: { type: 'date' },
             },
         },
     },
     () => {
         describe('updateMany', () => {
             testBoth('updateMany set', async ({ db, collection }) => {
+                const test1Date = new Date();
                 await collection?.insertOne({
                     stringFieldName: 'test1',
                     stringField2Name: 'test1',
@@ -43,6 +46,7 @@ describeBoth(
                     {
                         $set: {
                             integerFieldName: 111,
+                            dateFieldName: test1Date,
                         },
                     },
                 );
@@ -57,6 +61,7 @@ describeBoth(
                 expect(findResults.length).toBe(3);
                 expect(findResults[0].stringField2Name).toBe('test1');
                 expect(findResults[0].integerFieldName).toBe(111);
+                expect(findResults[0].dateFieldName.toString()).toBe(test1Date.toString());
                 expect(findResults[1].stringField2Name).toBe('test2');
                 expect(findResults[1].integerFieldName).toBe(111);
                 expect(findResults[2].stringField2Name).toBe('test3');

@@ -238,3 +238,14 @@ export interface UpdateWriteOpResult {
     // TODO: upsertedCount: number;
     // TODO: upsertedId: { _id: ObjectId };
 }
+
+/** http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#replaceOne */
+export interface ReplaceOneOptions extends CommonOptions {
+    // TODO: upsert?: boolean;
+    // TODO: bypassDocumentValidation?: boolean;
+}
+
+/** http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#updateOne */
+export interface UpdateOneOptions extends ReplaceOneOptions {
+    // TODO: arrayFilters?: object[];
+}

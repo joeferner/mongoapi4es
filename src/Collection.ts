@@ -8,6 +8,7 @@ import {
     InsertOneWriteOpResult,
     OptionalId,
     UpdateManyOptions,
+    UpdateOneOptions,
     UpdateQuery,
     UpdateWriteOpResult,
     WithId,
@@ -60,6 +61,9 @@ export class Collection<TSchema extends { [key: string]: any } = DefaultSchema> 
                 if (typeof value === 'string' || value instanceof String) {
                     value = `"${value.replace(/"/g, '\\"')}"`;
                 }
+                if (typeof value.getTime === 'function') {
+                    value = `ZonedDateTime.ofInstant(Instant.ofEpochMilli(${value.getTime()}L), ZoneId.of('Z'))`;
+                }
                 source += `ctx._source["${key}"] = ${value};\n`;
             }
         } else {
@@ -74,12 +78,26 @@ export class Collection<TSchema extends { [key: string]: any } = DefaultSchema> 
             },
         };
         debug('%s', JSON.stringify(body, null, 2));
-        const result = await this._db.client.esClient.updateByQuery({
-            refresh: this._db.client.clientOptions.mongoapi4es?.refreshOnUpdates,
-            index: this.collectionName,
-            body,
-        });
+        try {
+            const result = await this._db.client.esClient.updateByQuery({
+                refresh: this._db.client.clientOptions.mongoapi4es?.refreshOnUpdates,
+                index: this.collectionName,
+                body,
+            });
+        } catch (err) {
+            debug('%s', JSON.stringify(err, null, 2));
+            throw err;
+        }
         return {};
+    }
+
+    /** http://mongodb.github.io/node-mongodb-native/3.1/api/Collection.html#updateOne */
+    async updateOne<T>(
+        filter: FilterQuery<T>,
+        update: UpdateQuery<T> | Partial<T>,
+        options?: UpdateOneOptions,
+    ): Promise<UpdateWriteOpResult> {
+        return this.updateMany(filter, update, options);
     }
 
     async insertOne<T>(

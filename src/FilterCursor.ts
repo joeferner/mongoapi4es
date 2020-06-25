@@ -5,6 +5,7 @@ import Debug from 'debug';
 import { QueryBuilder } from './QueryBuilder';
 import { Collection } from './Collection';
 import { ObjectId } from 'bson';
+import { TypeConverter } from './TypeConverter';
 
 const debug = Debug('mongoapi4es:FilterCursor');
 
@@ -79,10 +80,10 @@ export class FilterCursor<T> extends Cursor<T> {
         if (hit) {
             this._resultsIndex++;
             const id = ObjectId.isValid(hit._id) ? new ObjectId(hit._id) : hit._id;
-            return {
+            return TypeConverter.convertEsTypesToJs({
                 _id: id,
                 ...hit._source,
-            };
+            });
         }
         return null;
     }
