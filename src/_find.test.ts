@@ -1,6 +1,7 @@
 import { describeBoth, testBoth } from './_testUtils';
 import { FilterCursor } from './FilterCursor';
 import { ObjectId } from 'bson';
+import { Collection as EsCollection } from './Collection';
 
 interface TestModel {
     stringFieldName: string;
@@ -161,6 +162,160 @@ describeBoth(
                 for (let i = 0; i < documentCount; i++) {
                     expect(results[i].integerFieldName).toBe(i);
                 }
+            });
+        });
+
+        describe('range', () => {
+            const createData = async (collection: any) => {
+                await collection?.insertOne({
+                    integerFieldName: 1,
+                });
+                await collection?.insertOne({
+                    integerFieldName: 2,
+                });
+                await collection?.insertOne({
+                    integerFieldName: 3,
+                });
+            };
+
+            testBoth('lt', async ({ db, collection }) => {
+                await createData(collection);
+                const results = await collection
+                    ?.find<TestModel>({
+                        integerFieldName: { $lt: 2 },
+                    })
+                    .toArray();
+                if (!results) {
+                    throw new Error('not found');
+                }
+                expect(results.length).toBe(1);
+                expect(results[0].integerFieldName).toBe(1);
+            });
+
+            testBoth('gt', async ({ db, collection }) => {
+                await createData(collection);
+                const results = await collection
+                    ?.find<TestModel>({
+                        integerFieldName: { $gt: 2 },
+                    })
+                    .toArray();
+                if (!results) {
+                    throw new Error('not found');
+                }
+                expect(results.length).toBe(1);
+                expect(results[0].integerFieldName).toBe(3);
+            });
+
+            testBoth('lte', async ({ db, collection }) => {
+                await createData(collection);
+                const results = await collection
+                    ?.find<TestModel>({
+                        integerFieldName: { $lte: 2 },
+                    })
+                    .sort({
+                        integerFieldName: 1,
+                    })
+                    .toArray();
+                if (!results) {
+                    throw new Error('not found');
+                }
+                expect(results.length).toBe(2);
+                expect(results[0].integerFieldName).toBe(1);
+                expect(results[1].integerFieldName).toBe(2);
+            });
+
+            testBoth('gte', async ({ db, collection }) => {
+                await createData(collection);
+                const results = await collection
+                    ?.find<TestModel>({
+                        integerFieldName: { $gte: 2 },
+                    })
+                    .sort({
+                        integerFieldName: 1,
+                    })
+                    .toArray();
+                if (!results) {
+                    throw new Error('not found');
+                }
+                expect(results.length).toBe(2);
+                expect(results[0].integerFieldName).toBe(2);
+                expect(results[1].integerFieldName).toBe(3);
+            });
+        });
+
+        describe('boolean', () => {
+            testBoth('or', async ({ db, collection }) => {
+                await collection?.insertOne({
+                    stringFieldName: 'test1',
+                });
+                await collection?.insertOne({
+                    stringFieldName: 'test2',
+                });
+                await collection?.insertOne({
+                    stringFieldName: 'test3',
+                });
+
+                const results = await collection
+                    ?.find<TestModel>({
+                        $or: [{ stringFieldName: 'test1' }, { stringFieldName: 'test2' }],
+                    })
+                    .sort({
+                        stringFieldName: 1,
+                    })
+                    .toArray();
+                if (!results) {
+                    throw new Error('not found');
+                }
+                expect(results.length).toBe(2);
+                expect(results[0].stringFieldName).toBe('test1');
+                expect(results[1].stringFieldName).toBe('test2');
+            });
+
+            testBoth('and', async ({ db, collection }) => {
+                await collection?.insertOne({
+                    stringFieldName: 'test1',
+                    integerFieldName: 1,
+                });
+                await collection?.insertOne({
+                    stringFieldName: 'test2',
+                    integerFieldName: 1,
+                });
+                await collection?.insertOne({
+                    stringFieldName: 'test1',
+                    integerFieldName: 2,
+                });
+
+                const results = await collection
+                    ?.find<TestModel>({
+                        $and: [{ stringFieldName: 'test1' }, { integerFieldName: 1 }],
+                    })
+                    .toArray();
+                if (!results) {
+                    throw new Error('not found');
+                }
+                expect(results.length).toBe(1);
+                expect(results[0].stringFieldName).toBe('test1');
+                expect(results[0].integerFieldName).toBe(1);
+            });
+
+            testBoth('not', async ({ db, collection }) => {
+                await collection?.insertOne({
+                    stringFieldName: 'test1',
+                });
+                await collection?.insertOne({
+                    stringFieldName: 'test2',
+                });
+
+                const results = await collection
+                    ?.find<TestModel>({
+                        stringFieldName: { $not: { $eq: 'test1' } },
+                    })
+                    .toArray();
+                if (!results) {
+                    throw new Error('not found');
+                }
+                expect(results.length).toBe(1);
+                expect(results[0].stringFieldName).toBe('test2');
             });
         });
     },

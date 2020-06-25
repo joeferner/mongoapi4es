@@ -1,0 +1,17 @@
+{
+  "commands": [
+    {
+      "title": "build",
+      "command": "npm run build:watch"
+    },
+    {
+      "title": "docker",
+      "dir": "test",
+      "command": "docker-compose up"
+    },
+    {
+      "title": "test",
+      "command": "npm run test:watch"
+    }
+  ]
+}
