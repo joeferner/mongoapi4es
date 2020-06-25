@@ -46,12 +46,41 @@ export class QueryBuilder {
                 throw new Error(`not implemented: query with $ prefix fields: ${key}`);
             }
 
-            // range <, >, etc
-            if (Object.keys(value).length === 1 && (value.$lt || value.$gt || value.$lte || value.$gte)) {
+            // ==, !=
+            if (Object.keys(value).length === 1 && ('$eq' in value || '$ne' in value)) {
+                const comparisonValue = value.$eq || value.$ne;
+                if (comparisonValue === null) {
+                    throw new Error("Can't compare against null, Elasticsearch does not store nulls");
+                }
+                let comparisonFilter: any = {
+                    term: {
+                        [key]: comparisonValue,
+                    },
+                };
+                if ('$ne' in value) {
+                    comparisonFilter = {
+                        bool: {
+                            must_not: comparisonFilter,
+                        },
+                    };
+                }
+                mustQueries.push(comparisonFilter);
+                continue;
+            }
+
+            // comparison range <, >, <=, >=, etc
+            if (
+                Object.keys(value).length === 1 &&
+                ('$lt' in value || '$gt' in value || '$lte' in value || '$gte' in value)
+            ) {
+                const comparisonValue = value.$lt || value.$gt || value.$lte || value.$gte;
+                if (comparisonValue === null) {
+                    throw new Error("Can't compare against null, Elasticsearch does not store nulls");
+                }
                 mustQueries.push({
                     range: {
                         [key]: {
-                            [Object.keys(value)[0].substr(1)]: value.$lt || value.$gt || value.$lte || value.$gte,
+                            [Object.keys(value)[0].substr(1)]: comparisonValue,
                         },
                     },
                 });
@@ -70,6 +99,16 @@ export class QueryBuilder {
                                 [key]: notQuery.$eq,
                             },
                         },
+                    },
+                });
+                continue;
+            }
+
+            if (Object.keys(value).length === 1 && value.$exists) {
+                const exists = value.$exists;
+                mustQueries.push({
+                    exists: {
+                        field: key,
                     },
                 });
                 continue;
