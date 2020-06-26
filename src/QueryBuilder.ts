@@ -46,72 +46,74 @@ export class QueryBuilder {
                 throw new Error(`not implemented: query with $ prefix fields: ${key}`);
             }
 
-            // ==, !=
-            if (Object.keys(value).length === 1 && ('$eq' in value || '$ne' in value)) {
-                const comparisonValue = value.$eq || value.$ne;
-                if (comparisonValue === null) {
-                    throw new Error("Can't compare against null, Elasticsearch does not store nulls");
-                }
-                let comparisonFilter: any = {
-                    term: {
-                        [key]: comparisonValue,
-                    },
-                };
-                if ('$ne' in value) {
-                    comparisonFilter = {
-                        bool: {
-                            must_not: comparisonFilter,
+            if (typeof value === 'object') {
+                // ==, !=
+                if (Object.keys(value).length === 1 && ('$eq' in value || '$ne' in value)) {
+                    const comparisonValue = value.$eq || value.$ne;
+                    if (comparisonValue === null) {
+                        throw new Error("Can't compare against null, Elasticsearch does not store nulls");
+                    }
+                    let comparisonFilter: any = {
+                        term: {
+                            [key]: comparisonValue,
                         },
                     };
+                    if ('$ne' in value) {
+                        comparisonFilter = {
+                            bool: {
+                                must_not: comparisonFilter,
+                            },
+                        };
+                    }
+                    mustQueries.push(comparisonFilter);
+                    continue;
                 }
-                mustQueries.push(comparisonFilter);
-                continue;
-            }
 
-            // comparison range <, >, <=, >=, etc
-            if (
-                Object.keys(value).length === 1 &&
-                ('$lt' in value || '$gt' in value || '$lte' in value || '$gte' in value)
-            ) {
-                const comparisonValue = value.$lt || value.$gt || value.$lte || value.$gte;
-                if (comparisonValue === null) {
-                    throw new Error("Can't compare against null, Elasticsearch does not store nulls");
-                }
-                mustQueries.push({
-                    range: {
-                        [key]: {
-                            [Object.keys(value)[0].substr(1)]: comparisonValue,
-                        },
-                    },
-                });
-                continue;
-            }
-
-            if (Object.keys(value).length === 1 && value.$not) {
-                const notQuery = value.$not;
-                if (Object.keys(notQuery).length !== 1 && !notQuery.$eq) {
-                    throw new Error('only $not $eq queries are supported');
-                }
-                mustQueries.push({
-                    bool: {
-                        must_not: {
-                            term: {
-                                [key]: notQuery.$eq,
+                // comparison range <, >, <=, >=, etc
+                if (
+                    Object.keys(value).length === 1 &&
+                    ('$lt' in value || '$gt' in value || '$lte' in value || '$gte' in value)
+                ) {
+                    const comparisonValue = value.$lt || value.$gt || value.$lte || value.$gte;
+                    if (comparisonValue === null) {
+                        throw new Error("Can't compare against null, Elasticsearch does not store nulls");
+                    }
+                    mustQueries.push({
+                        range: {
+                            [key]: {
+                                [Object.keys(value)[0].substr(1)]: comparisonValue,
                             },
                         },
-                    },
-                });
-                continue;
-            }
+                    });
+                    continue;
+                }
 
-            if (Object.keys(value).length === 1 && value.$exists) {
-                const exists = value.$exists;
-                mustQueries.push({
-                    exists: {
-                        field: key,
-                    },
-                });
-                continue;
+                if (Object.keys(value).length === 1 && '$not' in value) {
+                    const notQuery = value.$not;
+                    if (Object.keys(notQuery).length !== 1 && !notQuery.$eq) {
+                        throw new Error('only $not $eq queries are supported');
+                    }
+                    mustQueries.push({
+                        bool: {
+                            must_not: {
+                                term: {
+                                    [key]: notQuery.$eq,
+                                },
+                            },
+                        },
+                    });
+                    continue;
+                }
+
+                if (Object.keys(value).length === 1 && '$exists' in value) {
+                    const exists = value.$exists;
+                    mustQueries.push({
+                        exists: {
+                            field: key,
+                        },
+                    });
+                    continue;
+                }
             }
 
             // term
